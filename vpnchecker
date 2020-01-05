@@ -1,0 +1,31 @@
+#!/bin/bash
+
+LOGFILE=/var/log/fritzbox.log
+VPN_FILE=fritzbox.conf
+
+myHost=192.168.96.1
+
+ping -c1 $myHost > /dev/null
+if [ $? -eq 0 ]
+  then 
+    echo "$(date +%Y-%m-%d:%T) :Host ist erreichbar" | tee -a $LOGFILE 
+  else
+    echo "" | tee -a $LOGFILE
+ 
+    echo "$(date +%Y-%m-%d:%T) :Host ist nicht erreichbar. Versuche neu aufzubauen..." |tee -a $LOGFILE
+
+    /usr/sbin/vpnc-disconnect
+    /etc/init.d/networking restart
+    sleep 12
+ 
+    /usr/sbin/vpnc $VPN_FILE
+    pid=$(pidof vpnc)
+ 
+    ipvpn=$(/sbin/ifconfig tun0 | grep "inet Adresse" | cut -b 24-38)
+ 
+    echo "$(date +%Y-%m-%d:%T) Verbindung Erfolgreich aufgebaut!" | tee -a $LOGFILE
+ 
+    echo "" | tee -a $LOGFILE
+    
+
+fi
